@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import register from "../../images/register.jpg";
+import fondo from "../../images/fondo_completo.jpg";
 
 export const Signup = () => {
     const [formData, setFormData] = useState({
@@ -159,7 +161,7 @@ export const Signup = () => {
                         <div
                             className="h-100 w-100"
                             style={{
-                                backgroundImage: "url('https://images.unsplash.com/photo-1549488344-c6f966d9f36b?q=80&w=1000&auto=format&fit=crop')",
+                                backgroundImage: `url(${register})`,
                                 backgroundSize: "cover",
                                 backgroundPosition: "center",
                                 minHeight: "100%"

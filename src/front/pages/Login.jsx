@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import login from "../../images/login.jpg"
+import fondo from "../../images/fondo_completo.jpg";
 
 export const Login = () => {
     const [email, setEmail] = useState("");
@@ -32,11 +34,40 @@ export const Login = () => {
     };
 
     return (
-        <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light p-3">
-            {/* Contenedor principal estilo tarjeta ancha */}
-            <div className="card shadow-lg border-0 rounded-4 overflow-hidden" style={{ maxWidth: "900px", width: "100%" }}>
+        /* Contenedor principal que vive estrictamente en el espacio central entre el Navbar y el Footer */
+        <div 
+            className="w-100 d-flex align-items-center justify-content-center p-4 my-3 position-relative"
+            style={{ 
+                minHeight: "75vh", // Asegura altura suficiente en el centro sin pisar los extremos
+            }}
+        >
+
+            {/* CAPA 1: La imagen de fondo global adaptada al área central */}
+            <div
+                className="position-absolute top-0 start-0 w-100 h-100 rounded-4"
+                style={{
+                    backgroundImage: `url(${fondo})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    zIndex: -2,
+                }}
+            ></div>
+
+            {/* CAPA 2: El filtro de Blur y el Degradado oscuro */}
+            <div
+                className="position-absolute top-0 start-0 w-100 h-100 rounded-4"
+                style={{
+                    background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%)",
+                    backdropFilter: "blur(12px)",
+                    WebkitBackdropFilter: "blur(12px)",
+                    zIndex: -1,
+                }}
+            ></div>
+
+            {/* CAPA 3: Contenedor principal estilo tarjeta ancha */}
+            <div className="card shadow-lg border-0 rounded-4 overflow-hidden" style={{ maxWidth: "900px", width: "100%", zIndex: 1 }}>
                 <div className="row g-0 align-items-stretch">
-                    
+
                     {/* COLUMNA IZQUIERDA: Formulario */}
                     <div className="col-md-6 p-4 p-sm-5 bg-white d-flex flex-column justify-content-center">
                         <div className="mb-4">
@@ -82,15 +113,15 @@ export const Login = () => {
                                 <a href="#" className="text-decoration-none text-muted">¿Olvidaste tu contraseña?</a>
                             </div>
 
-                            {/* Botón Principal (Color personalizado de la app) */}
-                            <button 
-                                type="submit" 
+                            {/* Botón Principal */}
+                            <button
+                                type="submit"
                                 className="btn btn-lg w-100 text-white rounded-3 mb-4 fs-6 fw-semibold"
                                 style={{ backgroundColor: "#ef4444", border: "none" }}
                             >
                                 Iniciar sesión
                             </button>
-                            
+
                             {/* Separador */}
                             <div className="position-relative text-center mb-4">
                                 <hr className="text-muted opacity-25" />
@@ -99,13 +130,13 @@ export const Login = () => {
                                 </span>
                             </div>
 
-                            {/* Botones Sociales (Requiere FontAwesome o Bootstrap Icons) */}
+                            {/* Botones Sociales */}
                             <div className="d-flex gap-3 mb-4">
                                 <button type="button" className="btn btn-outline-light text-dark border w-50 d-flex align-items-center justify-content-center rounded-3 fs-6">
                                     <i className="bi bi-google me-2"></i> Google
                                 </button>
                                 <button type="button" className="btn btn-outline-light text-dark border w-50 d-flex align-items-center justify-content-center rounded-3 fs-6">
-                                    <i className="bi bi-apple me-2"></i> Apple
+                                    <i className="bi bi-apple me-2"></i> Apple t
                                 </button>
                             </div>
 
@@ -118,14 +149,13 @@ export const Login = () => {
                         </form>
                     </div>
 
-                    {/* COLUMNA DERECHA: Imagen de Fondo (Se oculta en móviles) */}
+                    {/* COLUMNA DERECHA: Imagen secundaria o decorativa de la tarjeta */}
                     <div className="col-md-6 d-none d-md-block">
-                        <div 
-                            className="h-100 w-100" 
-                            style={{ 
-                                // Reemplaza esta URL con la ruta de tu imagen de assets (ej: url('/src/front/img/caracas-sunset.jpg'))
-                                backgroundImage: "url('https://images.unsplash.com/photo-1549488344-c6f966d9f36b?q=80&w=1000&auto=format&fit=crop')", 
-                                backgroundSize: "cover", 
+                        <div
+                            className="h-100 w-100"
+                            style={{
+                                backgroundImage: `url(${login})`,
+                                backgroundSize: "cover",
                                 backgroundPosition: "center",
                                 minHeight: "100%"
                             }}
