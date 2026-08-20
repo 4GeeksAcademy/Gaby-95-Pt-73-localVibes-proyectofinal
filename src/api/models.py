@@ -65,7 +65,7 @@ class Category(db.Model):
 
 
 # -------------------------------------------------------------
-# 3. TABLA EVENT
+# 3. TABLA EVENT (Esta es la que usa tu semilla)
 # -------------------------------------------------------------
 class Event(db.Model):
     __tablename__ = 'events'
@@ -106,8 +106,7 @@ class Event(db.Model):
             "image_url": self.image_url,
             "status": self.status,
             "organizer_id": self.organizer_id,
-            "category_id": self.category_id,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "category_id": self.category_id
         }
 
 
@@ -131,81 +130,5 @@ class FavoriteEvent(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "event_id": self.event_id,
-            "event": self.event.serialize() if self.event else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
-# -------------------------------------------------------------
-# 5. COORDENADAS
-# -------------------------------------------------------------
-
-from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
-
-db = SQLAlchemy()
-
-class Place(db.Model):
-    __tablename__ = 'place'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    address = db.Column(db.String(255), nullable=False)
-    latitude = db.Column(db.Float, nullable=False)
-    longitude = db.Column(db.Float, nullable=False)
-    category = db.Column(db.String(50), nullable=False) # ej: 'Restaurante', 'Concierto'
-    image_url = db.Column(db.String(255), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
-    # Relación con el usuario que lo creó
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-
-    def serialize(self):
-        return {
-            "id": self.id,
-            "name": self.name,
-            "description": self.description,
-            "address": self.address,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "category": self.category,
-            "image_url": self.image_url,
-            "user_id": self.user_id
-        }
-
-    from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Place
-
-api = Blueprint('api', __name__)
-
-# GET: Listar todos los lugares
-@api.route('/places', methods=['GET'])
-def get_places():
-    places = Place.query.all()
-    return jsonify([place.serialize() for place in places]), 200
-
-# POST: Crear un nuevo lugar (Protegido)
-@api.route('/places', methods=['POST'])
-@jwt_required()
-def add_place():
-    body = request.get_json()
-    current_user_id = get_jwt_identity()
-
-    # Validación básica
-    required_fields = ["name", "latitude", "longitude", "category"]
-    if not all(field in body for field in required_fields):
-        return jsonify({"msg": "Faltan campos obligatorios"}), 400
-
-    new_place = Place(
-        name=body['name'],
-        description=body.get('description'),
-        address=body.get('address', ''),
-        latitude=body['latitude'],
-        longitude=body['longitude'],
-        category=body['category'],
-        image_url=body.get('image_url'),
-        user_id=current_user_id
-    )
-
-    db.session.add(new_place)
-    db.session.commit()
-    return jsonify({"msg": "Lugar creado con éxito", "place": new_place.serialize()}), 201
