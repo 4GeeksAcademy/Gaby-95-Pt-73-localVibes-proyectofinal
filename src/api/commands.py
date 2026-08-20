@@ -3,7 +3,7 @@ from api.models import db, User, Category, Event
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 from sqlalchemy import delete
-
+# SEED PARA RELLENAR BASE DE DATOS
 def setup_commands(app):
     
     @app.cli.command("insert-test-data")
