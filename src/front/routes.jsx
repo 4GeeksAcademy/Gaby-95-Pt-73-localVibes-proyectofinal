@@ -7,14 +7,20 @@ import { Profile } from "./pages/Profile";
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
-            {/* 'index' define la página inicial por defecto al entrar a la raíz / */}
-            <Route index element={<Signup />} />
-            
+        <Route
+            path="/"
+            element={<Layout />}
+            errorElement={<h1>Not found!</h1>}
+        >
+
+            {/* Página principal de Local Vibes */}
+            <Route index element={<Home />} />
+
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/home" element={<Home />} />
+
         </Route>
     )
 );
