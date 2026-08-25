@@ -72,7 +72,7 @@ export const Footer = () => {
                 {/* BARRA INFERIOR DE COPYRIGHT */}
                 <div className="row align-items-center justify-content-between small text-muted">
                     <div className="col-12 col-md-6 text-center text-md-start mb-2 mb-md-0">
-                        <p className="mb-0">© 2026 Local Vibes. Creado con <Heart size={14} className="text-danger mx-1" fill="currentColor" /> para Caracas.</p>
+                        <p className="mb-0">© 2026 Local Vibes. Creado con <Heart size={14} className="text-danger mx-1" fill="currentColor" /> para Venezuela.</p>
                     </div>
                     <div className="col-12 col-md-6 text-center text-md-end">
                         <div className="d-flex justify-content-center justify-content-md-end gap-3">
