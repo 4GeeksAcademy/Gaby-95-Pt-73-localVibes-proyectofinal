@@ -5,6 +5,7 @@ import {
     Mic, LogOut, CalendarDays, MapPin, Clock, ArrowRight, Star, PlusCircle, Trash2, Shield, AlertTriangle
 } from "lucide-react";
 
+
 export const Profile = () => {
     const [user, setUser] = useState(null);
     const [error, setError] = useState("");

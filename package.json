@@ -54,11 +54,23 @@
 		]
 	},
 	"dependencies": {
+<<<<<<< HEAD
 		"bootstrap": "^5.3.8",
 		"lucide-react": "^1.33.0",
 		"prop-types": "^15.8.1",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
 		"react-router-dom": "^6.18.0"
+=======
+		"leaflet": "^1.9.4",
+		"prop-types": "^15.8.1",
+		"react": "^18.2.0",
+		"react-dom": "^18.2.0",
+		"react-leaflet": "^5.0.0",
+		"react-router-dom": "^6.18.0"
+	},
+	"allowScripts": {
+		"esbuild@0.18.20": true
+>>>>>>> upstream/develop
 	}
 }

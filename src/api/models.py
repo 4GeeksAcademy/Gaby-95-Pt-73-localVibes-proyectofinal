@@ -65,7 +65,7 @@ class Category(db.Model):
 
 
 # -------------------------------------------------------------
-# 3. TABLA EVENT
+# 3. TABLA EVENT (Esta es la que usa tu semilla)
 # -------------------------------------------------------------
 class Event(db.Model):
     __tablename__ = 'events'
@@ -106,8 +106,7 @@ class Event(db.Model):
             "image_url": self.image_url,
             "status": self.status,
             "organizer_id": self.organizer_id,
-            "category_id": self.category_id,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "category_id": self.category_id
         }
 
 
@@ -131,6 +130,5 @@ class FavoriteEvent(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "event_id": self.event_id,
-            "event": self.event.serialize() if self.event else None,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
