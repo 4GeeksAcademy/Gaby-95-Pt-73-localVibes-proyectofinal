@@ -128,10 +128,10 @@ export const Home = () => {
                 <div className="row align-items-center g-4">
                     {/* TEXTO */}
                     <div className="col-12 col-lg-6 pe-lg-5">
-                        
+
                         {/* ETIQUETA */}
-                        <span className="badge bg-danger-subtle text-danger mb-3 py-2 px-3 rounded-pill">
-                            <MapPin size={15} className="me-1" />
+                        <span className="badge bg-danger-subtle text-danger border border-1 border-danger-subtle mb-3 py-2 px-3 rounded-pill fs-5 fw-normal">
+                            <MapPin size={24} className="me-1" />
                             Eventos
                         </span>
 
@@ -147,29 +147,29 @@ export const Home = () => {
 
                         {/* BUSCADOR */}
                         <div className="bg-white p-2 rounded-4 shadow-sm d-flex flex-column flex-md-row gap-2 align-items-stretch">
-                            
+
                             {/* QUÉ */}
-                            <div className="d-flex align-items-center px-3 w-100">
-                                <Search size={20} className="text-muted me-2 flex-shrink-0" />
+                            <div className="d-flex align-items-center px-3 py-1 flex-fill">
+                                <Search size={18} className="text-muted me-2 flex-shrink-0" />
                                 <input
                                     type="text"
-                                    className="form-control border-0 shadow-none bg-transparent"
+                                    className="form-control form-control-sm border-0 shadow-none bg-transparent"
                                     placeholder="¿Qué estás buscando?"
                                 />
                             </div>
 
                             {/* DÓNDE */}
-                            <div className="d-flex align-items-center px-3 w-100 border-start">
-                                <MapPin size={20} className="text-muted me-2 flex-shrink-0" />
+                            <div className="d-flex align-items-center px-3 py-1 flex-fill border-start-md">
+                                <MapPin size={18} className="text-muted me-2 flex-shrink-0" />
                                 <input
                                     type="text"
-                                    className="form-control border-0 shadow-none bg-transparent"
+                                    className="form-control form-control-sm border-0 shadow-none bg-transparent"
                                     placeholder="¿Dónde?"
                                 />
                             </div>
 
-                            {/* BOTÓN */}
-                            <button className="btn btn-danger rounded-pill px-5 py-2 w-100">
+                            {/* BOTÓN BUSCAR (Opcional si ya lo tienes al lado) */}
+                            <button className="btn btn-danger px-4 rounded-3 flex-shrink-0">
                                 Buscar
                             </button>
                         </div>
