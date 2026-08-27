@@ -41,7 +41,7 @@ export const Signup = () => {
 
     return (
         <div className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-5">
-            
+
             {/* CAPA 1: Imagen de fondo total (FIXED) */}
             <div
                 style={{
@@ -197,14 +197,43 @@ export const Signup = () => {
                             <h5 className="modal-title fw-bold">Términos y Condiciones</h5>
                             <button type="button" className="btn-close shadow-none" data-bs-dismiss="modal"></button>
                         </div>
-                        <div className="modal-body text-muted small px-4">
-                            <p className="fw-bold text-dark">Bienvenido a LocalVibes.</p>
-                            <p>Al registrarte, aceptas que LocalVibes es una herramienta para descubrir eventos y que no nos hacemos responsables por cambios en la programación de los locales registrados.</p>
-                        </div>
-                        <div className="modal-footer border-0 p-3">
-                            <button type="button" className="btn text-white w-100 fw-bold rounded-3 py-2" style={{ backgroundColor: "#ef4444" }} data-bs-dismiss="modal">
-                                Acepto los términos
-                            </button>
+                        <div className="modal-body text-muted small px-4" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+                            <p className="fw-bold text-dark fs-6 mb-3">Términos y Condiciones de Uso - Local Vibes</p>
+
+                            <p className="mb-3">
+                                Bienvenid@ a <strong>Local Vibes</strong>. Al registrarte y utilizar nuestra plataforma digital, aceptas cumplir y quedar vinculado por los presentes Términos y Condiciones. Si no estás de acuerdo con alguna parte de estas normativas, te solicitamos que no completes tu registro.
+                            </p>
+
+                            <h6 className="fw-bold text-dark mt-3">1. Uso Correcto de la Plataforma</h6>
+                            <p className="mb-2">
+                                Te comprometes a utilizar Local Vibes de manera responsable, ética y exclusivamente para descubrir eventos, locales y experiencias culturales y de entretenimiento locales (con especial enfoque en Caracas y Venezuela). Queda terminantemente prohibido:
+                            </p>
+                            <ul className="mb-3">
+                                <li>Publicar reseñas falsas, ofensivas, discriminatorias, violentas o que inciten al odio.</li>
+                                <li>Suplantar la identidad de otra persona o entidad.</li>
+                                <li>Intentar vulnerar la seguridad del sitio, realizar ataques informáticos o extraer información automatizada de forma masiva (scraping).</li>
+                                <li>Utilizar la plataforma para promocionar actividades ilegales o estafas bajo la fachada de eventos públicos.</li>
+                            </ul>
+
+                            <h6 className="fw-bold text-dark mt-3">2. Cuentas de Usuario y Seguridad</h6>
+                            <p className="mb-3">
+                                Eres el único responsable de mantener la confidencialidad de tus credenciales de acceso y de todas las actividades que ocurran bajo tu cuenta. Nos reservamos el derecho de suspender o cancelar cuentas que infrinjan las normas de convivencia o utilicen datos falsos.
+                            </p>
+
+                            <h6 className="fw-bold text-dark mt-3">3. Limitación de Responsabilidad</h6>
+                            <p className="mb-3">
+                                Local Vibes actúa como un canal de difusión y facilitador de experiencias comunitarias. <strong>No nos hacemos responsables por cancelaciones, reprogramaciones, cambios de última hora en la programación, ni por las normativas internas o incidencias ocurridas en los locales o eventos registrados por terceros</strong> en la plataforma. Recomendamos verificar siempre directamente con los organizadores.
+                            </p>
+
+                            <h6 className="fw-bold text-dark mt-3">4. Propiedad Intelectual</h6>
+                            <p className="mb-3">
+                                Todos los elementos visuales, logotipos, diseño de interfaz, bases de datos y textos que componen Local Vibes son propiedad exclusiva de la plataforma o de sus colaboradores. Su reproducción total o parcial sin autorización previa está prohibida.
+                            </p>
+
+                            <h6 className="fw-bold text-dark mt-3">5. Modificaciones</h6>
+                            <p className="mb-2">
+                                Nos reservamos el derecho de modificar estos Términos y Condiciones en cualquier momento para adaptarlos a mejoras del servicio o cambios legales. El uso continuo de la plataforma constituirá tu aceptación de las normativas actualizadas.
+                            </p>
                         </div>
                     </div>
                 </div>
