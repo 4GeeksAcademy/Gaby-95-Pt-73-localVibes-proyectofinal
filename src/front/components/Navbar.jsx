@@ -59,7 +59,7 @@ export const Navbar = () => {
                     <span className="nav-text">Explorar</span>
                     {location.pathname === '/explorar' && <div className="active-line"></div>}
                 </Link>
-                <Link to="/mapa" className="nav-item" style={{ textDecoration: 'none' }}>
+                <Link to="/map" className="nav-item" style={{ textDecoration: 'none' }}>
                     <span className="nav-text">Mapa</span>
                     <span className="badge badge-orange">Interactivo</span>
                 </Link>
