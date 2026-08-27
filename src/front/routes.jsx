@@ -10,12 +10,15 @@ import { CreateEvent } from "./pages/CreateEvent";
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
-        <Route path="/" element={<Layout />} errorElement={<h1 className="text-center mt-5">Not found!</h1>}>
-            
-            {/* Ruta inicial por defecto */}
-            <Route index element={<Signup />} />
-            
-            {/* Rutas de Autenticación */}
+        <Route
+            path="/"
+            element={<Layout />}
+            errorElement={<h1>Not found!</h1>}
+        >
+
+            {/* Página principal de Local Vibes */}
+            <Route index element={<Home />} />
+
             <Route path="/signup" element={<Signup />} />
             <Route path="/login" element={<Login />} />
             <Route path="/profile" element={<Profile />} />

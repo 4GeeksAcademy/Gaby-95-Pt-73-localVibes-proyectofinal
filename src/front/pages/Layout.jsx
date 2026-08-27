@@ -8,7 +8,7 @@ export const Layout = () => {
     return (
         <ScrollToTop>
             <Navbar />
-            <main className="container my-4">
+            <main className="container pb-4" style={{ paddingTop: "110px" }}>
                 <Outlet /> {/* Aquí React Router renderiza Signup, Login, Profile, etc. */}
             </main>
             <Footer />

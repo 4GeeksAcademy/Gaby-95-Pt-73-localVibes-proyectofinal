@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import login from "../../images/login.jpg"
+import loginImg from "../../images/login.jpg"; // Renombrado para evitar conflicto con el componente
 import fondo from "../../images/fondo_completo.jpg";
 
 export const Login = () => {
@@ -34,18 +34,16 @@ export const Login = () => {
     };
 
     return (
-        /* Contenedor principal que vive estrictamente en el espacio central entre el Navbar y el Footer */
-        <div 
-            className="w-100 d-flex align-items-center justify-content-center p-4 my-3 position-relative"
-            style={{ 
-                minHeight: "75vh", // Asegura altura suficiente en el centro sin pisar los extremos
-            }}
-        >
-
-            {/* CAPA 1: La imagen de fondo global adaptada al área central */}
+        <div className="min-vh-100 d-flex align-items-center justify-content-center p-3 p-md-5">
+            
+            {/* CAPA 1: Imagen de fondo total (FIXED) */}
             <div
-                className="position-absolute top-0 start-0 w-100 h-100 rounded-4"
                 style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
                     backgroundImage: `url(${fondo})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
@@ -53,29 +51,33 @@ export const Login = () => {
                 }}
             ></div>
 
-            {/* CAPA 2: El filtro de Blur y el Degradado oscuro */}
+            {/* CAPA 2: Filtro Blur y Degradado total (FIXED) */}
             <div
-                className="position-absolute top-0 start-0 w-100 h-100 rounded-4"
                 style={{
-                    background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.8) 100%)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    background: "linear-gradient(to bottom, rgba(0, 0, 0, 0.4) 0%, rgba(0, 0, 0, 0.8) 100%)",
+                    backdropFilter: "blur(15px)",
+                    WebkitBackdropFilter: "blur(15px)",
                     zIndex: -1,
                 }}
             ></div>
 
-            {/* CAPA 3: Contenedor principal estilo tarjeta ancha */}
+            {/* CAPA 3: Tarjeta de Iniciar Sesión */}
             <div className="card shadow-lg border-0 rounded-4 overflow-hidden" style={{ maxWidth: "900px", width: "100%", zIndex: 1 }}>
                 <div className="row g-0 align-items-stretch">
 
                     {/* COLUMNA IZQUIERDA: Formulario */}
                     <div className="col-md-6 p-4 p-sm-5 bg-white d-flex flex-column justify-content-center">
                         <div className="mb-4">
-                            <h3 className="fw-bold mb-2">Iniciar sesión</h3>
-                            <p className="text-muted small">Descubre y conecta con los mejores eventos.</p>
+                            <h3 className="fw-bold mb-2 text-dark">Iniciar sesión</h3>
+                            <p className="text-muted small">Descubre y conecta con los mejores eventos de la ciudad.</p>
                         </div>
 
-                        {error && <div className="alert alert-danger py-2 small">{error}</div>}
+                        {error && <div className="alert alert-danger py-2 small mb-3">{error}</div>}
 
                         <form onSubmit={handleSubmit}>
                             {/* Input Correo */}
@@ -83,7 +85,7 @@ export const Login = () => {
                                 <label className="form-label fw-semibold small text-dark">Correo electrónico</label>
                                 <input
                                     type="email"
-                                    className="form-control form-control-lg bg-light border-0 fs-6"
+                                    className="form-control form-control-lg bg-light border-0 fs-6 shadow-sm"
                                     placeholder="ejemplo@correo.com"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -96,7 +98,7 @@ export const Login = () => {
                                 <label className="form-label fw-semibold small text-dark">Contraseña</label>
                                 <input
                                     type="password"
-                                    className="form-control form-control-lg bg-light border-0 fs-6"
+                                    className="form-control form-control-lg bg-light border-0 fs-6 shadow-sm"
                                     placeholder="••••••••"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
@@ -110,51 +112,33 @@ export const Login = () => {
                                     <input type="checkbox" className="form-check-input shadow-none" id="rememberMe" />
                                     <label className="form-check-label text-muted" htmlFor="rememberMe">Recuérdame</label>
                                 </div>
-                                <a href="#" className="text-decoration-none text-muted">¿Olvidaste tu contraseña?</a>
+                                <a href="#" className="text-decoration-none fw-bold" style={{ color: "#ef4444" }}>¿Olvidaste tu contraseña?</a>
                             </div>
 
                             {/* Botón Principal */}
                             <button
                                 type="submit"
-                                className="btn btn-lg w-100 text-white rounded-3 mb-4 fs-6 fw-semibold"
+                                className="btn btn-lg w-100 text-white rounded-3 mb-4 fs-6 fw-bold shadow-sm"
                                 style={{ backgroundColor: "#ef4444", border: "none" }}
                             >
                                 Iniciar sesión
                             </button>
 
-                            {/* Separador */}
-                            <div className="position-relative text-center mb-4">
-                                <hr className="text-muted opacity-25" />
-                                <span className="position-absolute top-50 start-50 translate-middle bg-white px-3 text-muted small" style={{ fontSize: "0.8rem" }}>
-                                    o continúa con
-                                </span>
-                            </div>
-
-                            {/* Botones Sociales */}
-                            <div className="d-flex gap-3 mb-4">
-                                <button type="button" className="btn btn-outline-light text-dark border w-50 d-flex align-items-center justify-content-center rounded-3 fs-6">
-                                    <i className="bi bi-google me-2"></i> Google
-                                </button>
-                                <button type="button" className="btn btn-outline-light text-dark border w-50 d-flex align-items-center justify-content-center rounded-3 fs-6">
-                                    <i className="bi bi-apple me-2"></i> Apple t
-                                </button>
-                            </div>
-
                             {/* Enlace de Registro */}
-                            <div className="text-center mt-3">
+                            <div className="text-center">
                                 <p className="text-muted small mb-0">
-                                    ¿No tienes cuenta? <Link to="/signup" style={{ color: "#ef4444", fontWeight: "600", textDecoration: "none" }}>Regístrate</Link>
+                                    ¿No tienes cuenta? <Link to="/signup" style={{ color: "#ef4444", fontWeight: "700", textDecoration: "none" }}>Regístrate</Link>
                                 </p>
                             </div>
                         </form>
                     </div>
 
-                    {/* COLUMNA DERECHA: Imagen secundaria o decorativa de la tarjeta */}
+                    {/* COLUMNA DERECHA: Imagen secundaria decorativa */}
                     <div className="col-md-6 d-none d-md-block">
                         <div
                             className="h-100 w-100"
                             style={{
-                                backgroundImage: `url(${login})`,
+                                backgroundImage: `url(${loginImg})`,
                                 backgroundSize: "cover",
                                 backgroundPosition: "center",
                                 minHeight: "100%"
