@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./Navbar.css";
+import logo from "../assets/img/Logo Local Vibes 4k.png";
 
 export const Navbar = () => {
     const location = useLocation();
     const [user, setUser] = useState(null);
 
     // Cantidades sincronizadas
-    const favoritesCount = 2; 
+    const favoritesCount = 2;
     const ticketsCount = 3;
 
     useEffect(() => {
@@ -37,16 +38,12 @@ export const Navbar = () => {
     return (
         <nav className="custom-navbar" style={{ position: "fixed", top: 0, left: 0, width: "100%", zIndex: 1000, background: "#ffffff", boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
             {/* LOGO */}
-            <Link to="/" className="navbar-logo" style={{ textDecoration: 'none' }}>
-                <div className="logo-icon-container">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"></path>
-                    </svg>
-                </div>
-                <div className="logo-text">
-                    <span className="logo-subtitle">LOCAL</span>
-                    <span className="logo-title">vibes<span className="logo-dot">.</span></span>
-                </div>
+            <Link to="/" className="navbar-logo" style={{ textDecoration: "none" }}>
+                <img
+                    src={logo}
+                    alt="Local Vibes"
+                    className="navbar-logo-img"
+                />
             </Link>
 
             {/* ENLACES CENTRALES */}
@@ -59,17 +56,17 @@ export const Navbar = () => {
                     <span className="nav-text">Explorar</span>
                     {location.pathname === '/explorar' && <div className="active-line"></div>}
                 </Link>
-                <Link to="/mapa" className="nav-item" style={{ textDecoration: 'none' }}>
+                <Link to="/map" className="nav-item" style={{ textDecoration: 'none' }}>
                     <span className="nav-text">Mapa</span>
                     <span className="badge badge-orange">Interactivo</span>
                 </Link>
-                
+
                 {/* FAVORITOS CONTEO SINCRONIZADO */}
                 <Link to="/profile?tab=favoritos" className="nav-item" style={{ textDecoration: 'none' }}>
                     <span className="nav-text">Favoritos</span>
                     <span className="badge badge-pink">{favoritesCount}</span>
                 </Link>
-                
+
                 {/* MIS ENTRADAS CONTEO SINCRONIZADO */}
                 <Link to="/profile?tab=entradas" className="nav-item" style={{ textDecoration: 'none' }}>
                     <span className="nav-text">Mis entradas</span>
@@ -90,13 +87,13 @@ export const Navbar = () => {
                     </svg>
                     <span className="notification-dot"></span>
                 </button>
-                
+
                 {/* PERFIL DE USUARIO DINÁMICO */}
                 {user ? (
                     <Link to="/profile" className="user-profile" style={{ textDecoration: 'none' }}>
-                        <img 
-                            src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name || 'Invitado'}&background=random`} 
-                            alt={user?.name || "Usuario"} 
+                        <img
+                            src={user?.avatar || `https://ui-avatars.com/api/?name=${user?.name || 'Invitado'}&background=random`}
+                            alt={user?.name || "Usuario"}
                             className="user-avatar"
                         />
                         <span className="user-name">
