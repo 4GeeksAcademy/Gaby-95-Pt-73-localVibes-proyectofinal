@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Category, Event, FavoriteEvent
+from api.models import db, User, Category, Event, FavoriteEvent, Ticket
+from api.models import db, User, Category, Event, FavoriteEvent, UserMedia
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 from sqlalchemy import select, or_, delete
 from datetime import datetime
+import cloudinary.uploader
+from flask import Blueprint, request, jsonify
 
 api = Blueprint('api', __name__)
 CORS(api)
@@ -107,28 +110,32 @@ def get_event_detail(event_id):
 @api.route('/events', methods=['POST'])
 @jwt_required()
 def create_event():
-    current_user_id = int(get_jwt_identity())
     body = request.get_json()
+    current_user_id = int(get_jwt_identity())
 
-    required_fields = ["title", "category_id", "latitude", "longitude"]
-    if not body or any(field not in body or not body[field] for field in required_fields):
-        return jsonify({"message": "Faltan campos obligatorios"}), 400
-
+    # Verificamos que vengan los datos requeridos...
+    
     new_event = Event(
-        title=body["title"],
-        description=body.get("description"),
+        title=body.get("title"),
+        category_id=body.get("category_id"),
         location_name=body.get("location_name"),
         address=body.get("address"),
-        latitude=float(body["latitude"]),
-        longitude=float(body["longitude"]),
-        image_url=body.get("image_url"),
-        status="active",
+        start_time=body.get("start_time"),
+        description=body.get("description"),
+        capacity=body.get("capacity"),
+        latitude=body.get("latitude"),
+        longitude=body.get("longitude"),
+        imgs_event=body.get("imgs_event"),
         organizer_id=current_user_id,
-        category_id=int(body["category_id"])
+
+        # 👇 ¡AGREGA ESTAS DOS LÍNEAS AQUÍ! 👇
+        price=body.get("price", 0.0),
+        end_time=body.get("end_time") 
     )
 
     db.session.add(new_event)
     db.session.commit()
+
     return jsonify({"message": "Evento creado exitosamente", "event": new_event.serialize()}), 201
 
 
@@ -148,7 +155,139 @@ def get_favorites():
 @jwt_required()
 def add_favorite(event_id):
     current_user_id = int(get_jwt_identity())
+    
+    # 1. Verificamos si ya existe en la base de datos
+    stmt = select(FavoriteEvent).where(
+        FavoriteEvent.user_id == current_user_id, 
+        FavoriteEvent.event_id == event_id
+    )
+    existing_favorite = db.session.scalars(stmt).first()
+    
+    # 2. Si ya existe, devolvemos un mensaje y evitamos el duplicado (Código 400 o 200)
+    if existing_favorite:
+        return jsonify({"message": "Este evento ya se encuentra en tus favoritos"}), 400
+    
+    # 3. Si no existe, lo creamos normalmente
     new_favorite = FavoriteEvent(user_id=current_user_id, event_id=event_id)
     db.session.add(new_favorite)
     db.session.commit()
+    
     return jsonify({"message": "Agregado a favoritos"}), 201
+
+@api.route('/favorites/<int:event_id>', methods=['DELETE'])
+@jwt_required()
+def remove_favorite(event_id):
+    current_user_id = int(get_jwt_identity())
+    
+    # Buscamos el favorito exacto de este usuario y este evento
+    stmt = select(FavoriteEvent).where(
+        FavoriteEvent.user_id == current_user_id, 
+        FavoriteEvent.event_id == event_id
+    )
+    favorite_to_delete = db.session.scalars(stmt).first()
+    
+    if favorite_to_delete is None:
+        return jsonify({"error": "El favorito no existe"}), 404
+
+    db.session.delete(favorite_to_delete)
+    db.session.commit()
+    return jsonify({"message": "Eliminado de favoritos"}), 200
+
+# =============================================================
+# 5. Tickets
+# =============================================================
+
+@api.route('/user/dashboard-stats', methods=['GET'])
+@jwt_required()
+def get_dashboard_stats():
+    current_user_id = int(get_jwt_identity())
+    
+    # 1. Contamos cuántos eventos ha creado (organizer_id)
+    created_events = Event.query.filter_by(organizer_id=current_user_id).count()
+    
+    # 2. Contamos cuántos favoritos tiene guardados
+    saved_favorites = FavoriteEvent.query.filter_by(user_id=current_user_id).count()
+    
+    # 3. Contamos cuántas entradas ha comprado
+    purchased_tickets = Ticket.query.filter_by(user_id=current_user_id).count()
+    
+    return jsonify({
+        "created_events": created_events,
+        "saved_favorites": saved_favorites,
+        "purchased_tickets": purchased_tickets
+    }), 200
+    return jsonify({"message": "Agregado a favoritos"}), 201
+
+# =============================================================
+# 4. CLOUDINARY (Subida de imágenes)
+# =============================================================
+
+@api.route('/upload', methods=['POST'])
+def upload_images():
+    if 'images' not in request.files:
+        return jsonify({"error": "No se encontraron imágenes"}), 400
+        
+    files = request.files.getlist('images')
+    uploaded_urls = []
+
+    try:
+        for file in files:
+            if file.filename != '':
+                # Subir cada archivo a Cloudinary
+                result = cloudinary.uploader.upload(file)
+                uploaded_urls.append(result.get("secure_url"))
+        
+        return jsonify({
+            "urls": uploaded_urls
+        }), 200
+        
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# =============================================================
+# 5. GESTIÓN DE IMÁGENES DEL USUARIO (Perfil y Galería)
+# =============================================================
+
+# Ruta para cambiar la FOTO DE PERFIL (Avatar)
+@api.route('/profile/avatar', methods=['PUT'])
+@jwt_required()
+def update_profile_avatar():
+    current_user_id = get_jwt_identity()
+    user = db.session.get(User, int(current_user_id))
+    
+    if not user:
+        return jsonify({"message": "Usuario no encontrado"}), 404
+        
+    data = request.get_json()
+    new_avatar_url = data.get("image_url")
+    
+    if not new_avatar_url:
+        return jsonify({"message": "Falta la URL de la imagen"}), 400
+        
+    user.avatar = new_avatar_url 
+    db.session.commit()
+    
+    return jsonify({"message": "Foto de perfil actualizada", "user": user.serialize()}), 200
+
+
+# Ruta para añadir una imagen a la GALERÍA / PUBLICACIONES
+@api.route('/user/media', methods=['POST'])
+@jwt_required()
+def add_media_image():
+    current_user_id = get_jwt_identity()
+    data = request.get_json()
+    
+    image_url = data.get("image_url")
+    
+    if not image_url:
+        return jsonify({"message": "Falta la URL de la imagen"}), 400
+        
+    new_media = UserMedia(
+        user_id=int(current_user_id),
+        image_url=image_url
+    )
+    
+    db.session.add(new_media)
+    db.session.commit()
+    
+    return jsonify({"message": "Imagen guardada en la galería", "media": new_media.serialize()}), 201
