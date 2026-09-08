@@ -198,7 +198,7 @@ export const Signup = () => {
                 </div>
             </div>
 
-            {/* MODAL DE TÉRMINOS */}
+            {/* MODAL DE TÉRMINOS asdsad*/}
             <div className="modal fade" id="termsModal" tabIndex="-1">
                 <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                     <div className="modal-content border-0 shadow-lg">
