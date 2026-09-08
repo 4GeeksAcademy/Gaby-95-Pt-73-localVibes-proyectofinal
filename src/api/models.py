@@ -190,6 +190,7 @@ class UserMedia(db.Model):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relación con User
+    # Otra Relación
     user: Mapped["User"] = relationship(back_populates="media_images")
 
     def serialize(self):
