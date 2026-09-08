@@ -261,9 +261,9 @@ def login():
     }), 200
 
 
-@api.route('/profile', methods=['GET'])
+@api.route('/profile', methods=['GET', 'PUT'])
 @jwt_required()
-def get_profile():
+def handle_profile():
     current_user_id = get_jwt_identity()
 
     user = db.session.get(User, int(current_user_id))
@@ -299,8 +299,12 @@ def get_categories():
 @api.route('/events', methods=['GET'])
 def get_events():
     category_id = request.args.get('category_id')
-
-    stmt = select(Event).where(Event.status == "active")
+    
+    # 👇 AHORA FILTRA POR ESTADO ACTIVO Y QUE LA FECHA SEA MAYOR A HOY 👇
+    stmt = select(Event).where(
+        Event.status == "active",
+        Event.start_time >= datetime.now() # Oculta automáticamente los pasados
+    )
 
     if category_id:
         stmt = stmt.where(Event.category_id == int(category_id))
@@ -355,6 +359,71 @@ def create_event():
         "event": new_event.serialize()
     }), 201
 
+# Obtener los eventos creados por el usuario actual
+@api.route('/user/events', methods=['GET'])
+@jwt_required()
+def get_my_events():
+    current_user_id = int(get_jwt_identity())
+    
+    # Buscamos todos los eventos donde este usuario sea el organizador (pasados y futuros)
+    stmt = select(Event).where(Event.organizer_id == current_user_id).order_by(Event.start_time.desc())
+    my_events = db.session.scalars(stmt).all()
+    
+    return jsonify([event.serialize() for event in my_events]), 200
+
+
+# Eliminar un evento
+@api.route('/events/<int:event_id>', methods=['DELETE'])
+@jwt_required()
+def delete_event(event_id):
+    current_user_id = int(get_jwt_identity())
+    event = db.session.get(Event, event_id)
+    
+    if not event:
+        return jsonify({"message": "Evento no encontrado"}), 404
+        
+    # Verificar que el usuario que intenta borrarlo es el dueño
+    if event.organizer_id != current_user_id:
+        return jsonify({"message": "No tienes permiso para eliminar este evento"}), 403
+        
+    db.session.delete(event)
+    db.session.commit()
+    
+    return jsonify({"message": "Evento eliminado con éxito"}), 200
+
+# Editar un evento
+@api.route('/events/<int:event_id>', methods=['PUT'])
+@jwt_required()
+def update_event(event_id):
+    current_user_id = int(get_jwt_identity())
+    event = db.session.get(Event, event_id)
+    
+    if not event:
+        return jsonify({"message": "Evento no encontrado"}), 404
+        
+    # Verificar que el usuario que intenta editarlo es el dueño
+    if event.organizer_id != current_user_id:
+        return jsonify({"message": "No tienes permiso para editar este evento"}), 403
+        
+    body = request.get_json()
+    
+    # Actualizamos los campos si vienen en el body
+    if "title" in body: event.title = body["title"]
+    if "category_id" in body: event.category_id = body["category_id"]
+    if "location_name" in body: event.location_name = body["location_name"]
+    if "address" in body: event.address = body["address"]
+    if "start_time" in body: event.start_time = body["start_time"]
+    if "end_time" in body: event.end_time = body["end_time"]
+    if "description" in body: event.description = body["description"]
+    if "price" in body: event.price = body["price"]
+    if "capacity" in body: event.capacity = body["capacity"]
+    if "latitude" in body: event.latitude = body["latitude"]
+    if "longitude" in body: event.longitude = body["longitude"]
+    if "imgs_event" in body: event.imgs_event = body["imgs_event"]
+
+    db.session.commit()
+    
+    return jsonify({"message": "Evento actualizado con éxito", "event": event.serialize()}), 200
 
 # =============================================================
 # 7. FAVORITOS
@@ -458,101 +527,117 @@ def get_dashboard_stats():
         "saved_favorites": saved_favorites,
         "purchased_tickets": purchased_tickets
     }), 200
-
+    return jsonify({"message": "Agregado a favoritos"}), 201
 
 # =============================================================
-# 9. CLOUDINARY
+# 4. CLOUDINARY (Subida de imágenes)
 # =============================================================
 
 @api.route('/upload', methods=['POST'])
 def upload_images():
     if 'images' not in request.files:
-        return jsonify({
-            "error": "No se encontraron imágenes"
-        }), 400
-
+        return jsonify({"error": "No se encontraron imágenes"}), 400
+        
     files = request.files.getlist('images')
     uploaded_urls = []
 
     try:
         for file in files:
             if file.filename != '':
+                # Subir cada archivo a Cloudinary
                 result = cloudinary.uploader.upload(file)
                 uploaded_urls.append(result.get("secure_url"))
-
+        
         return jsonify({
             "urls": uploaded_urls
         }), 200
-
+        
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
-
+        return jsonify({"error": str(e)}), 500
 
 # =============================================================
-# 10. GESTIÓN DE IMÁGENES DEL USUARIO
+# 5. GESTIÓN DE IMÁGENES DEL USUARIO (Perfil y Galería)
 # =============================================================
 
-# FOTO DE PERFIL
+# Ruta para cambiar la FOTO DE PERFIL (Avatar)
 @api.route('/profile/avatar', methods=['PUT'])
 @jwt_required()
 def update_profile_avatar():
     current_user_id = get_jwt_identity()
-
-    user = db.session.get(
-        User,
-        int(current_user_id)
-    )
-
+    user = db.session.get(User, int(current_user_id))
+    
     if not user:
-        return jsonify({
-            "message": "Usuario no encontrado"
-        }), 404
-
+        return jsonify({"message": "Usuario no encontrado"}), 404
+        
     data = request.get_json()
     new_avatar_url = data.get("image_url")
-
+    
     if not new_avatar_url:
-        return jsonify({
-            "message": "Falta la URL de la imagen"
-        }), 400
-
-    user.avatar = new_avatar_url
-
+        return jsonify({"message": "Falta la URL de la imagen"}), 400
+        
+    user.avatar = new_avatar_url 
     db.session.commit()
-
-    return jsonify({
-        "message": "Foto de perfil actualizada",
-        "user": user.serialize()
-    }), 200
+    
+    return jsonify({"message": "Foto de perfil actualizada", "user": user.serialize()}), 200
 
 
-# GALERÍA / PUBLICACIONES
+# Ruta para añadir una imagen a la GALERÍA / PUBLICACIONES
 @api.route('/user/media', methods=['POST'])
 @jwt_required()
 def add_media_image():
     current_user_id = get_jwt_identity()
-
     data = request.get_json()
-
+    
     image_url = data.get("image_url")
-
+    
     if not image_url:
-        return jsonify({
-            "message": "Falta la URL de la imagen"
-        }), 400
-
+        return jsonify({"message": "Falta la URL de la imagen"}), 400
+        
     new_media = UserMedia(
         user_id=int(current_user_id),
         image_url=image_url
     )
-
+    
     db.session.add(new_media)
     db.session.commit()
+    
+    return jsonify({"message": "Imagen guardada en la galería", "media": new_media.serialize()}), 201
 
-    return jsonify({
-        "message": "Imagen guardada en la galería",
-        "media": new_media.serialize()
-    }), 201
+# =============================================================
+# 6. COMPRA Y GESTIÓN DE ENTRADAS (CHECKOUT)
+# =============================================================
 
+# Comprar una entrada (Simulación)
+@api.route('/tickets', methods=['POST'])
+@jwt_required()
+def buy_ticket():
+    current_user_id = int(get_jwt_identity())
+    body = request.get_json()
+    
+    event_id = body.get("event_id")
+    if not event_id:
+        return jsonify({"message": "El ID del evento es requerido"}), 400
+        
+    # Crear la nueva entrada (El modelo Ticket genera la "reference" automáticamente)
+    new_ticket = Ticket(
+        user_id=current_user_id,
+        event_id=event_id,
+        ticket_type=body.get("ticket_type", "General")
+    )
+    
+    db.session.add(new_ticket)
+    db.session.commit()
+    
+    return jsonify({"message": "Compra exitosa", "ticket": new_ticket.serialize()}), 201
+
+# Obtener mis entradas compradas
+@api.route('/user/tickets', methods=['GET'])
+@jwt_required()
+def get_my_tickets():
+    current_user_id = int(get_jwt_identity())
+    
+    # Buscamos los tickets del usuario, ordenados por fecha de compra más reciente
+    stmt = select(Ticket).where(Ticket.user_id == current_user_id).order_by(Ticket.purchased_at.desc())
+    my_tickets = db.session.scalars(stmt).all()
+    
+    return jsonify([ticket.serialize() for ticket in my_tickets]), 200

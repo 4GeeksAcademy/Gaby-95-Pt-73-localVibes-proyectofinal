@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import {
-    User, Ticket, Settings, LogOut, PlusCircle, Heart, ShieldCheck,
-    CheckCircle, Mic, CalendarDays, MapPin, Clock, ArrowRight, Star, Trash2, Shield, AlertTriangle
-} from "lucide-react";
-import { ImageUpload } from "../components/ImageUpload";
+import { User, Ticket, Settings, LogOut, PlusCircle, Heart, ShieldCheck, CalendarDays } from "lucide-react"; // Añadido CalendarDays
+
+// Importación de los sub-componentes 
+import { TabDashboard } from "../components/profile/TabDashboard";
+import { TabTickets } from "../components/profile/TabTickets";
+import { TabSettings } from "../components/profile/TabSettings";
+import { TabEvents } from "../components/profile/TabEvents"; // Importación de la nueva Tab
 
 export const Profile = () => {
     const [user, setUser] = useState(null);
@@ -63,10 +65,8 @@ export const Profile = () => {
         switch (activeTab) {
             case "dashboard": return <TabDashboard user={user} />;
             case "tickets": return <TabTickets />;
-            case "favoritos": return <TabFavoritos />;
-            case "crear-evento": return <TabCrearEvento isVerified={user.is_verified || false} />;
-            case "configuracion": return <TabConfiguracion user={user} setUser={setUser} />;
-            case "verificaciones": return <TabVerificaciones />;
+            case "events": return <TabEvents />; // Añadido el caso para TabEvents
+            case "settings": return <TabSettings user={user} />;
             default: return <TabDashboard user={user} />;
         }
     };
@@ -74,9 +74,19 @@ export const Profile = () => {
     return (
         <div className="container-fluid bg-light min-vh-100 p-0 d-flex flex-column flex-md-row">
             
-            {/* SIDEBAR */}
-            <aside className="bg-white border-end shadow-sm flex-shrink-0" style={{ width: "100%", mdWidth: "280px", flexBasis: "280px" }}>
-                <div className="d-flex flex-column p-4 min-vh-100 position-sticky top-0">
+            {/* =======================================
+                SIDEBAR
+            ======================================= */}
+            <aside 
+                className="bg-white border-end shadow-sm" 
+                style={{ 
+                    width: "100%", 
+                    maxWidth: "100%", 
+                    flexBasis: "280px", 
+                    flexShrink: 0 
+                }}
+            >
+                <div className="d-flex flex-column position-sticky top-0 p-4 p-xl-5 min-vh-100">
                     
                     {/* Perfil Info */}
                     <div className="text-center mb-4 mt-2">
@@ -93,9 +103,11 @@ export const Profile = () => {
                                 </span>
                             )}
                         </div>
-                        <h5 className="fw-bold mb-1 text-truncate">{user.name} {user.lastname}</h5>
-                        <span className="badge bg-light text-secondary border rounded-pill px-3 py-1">
-                            {user.role === 'admin' ? 'Organizador' : 'Usuario'}
+                        <h5 className="fw-bold mb-1 text-truncate" style={{ color: "#2b2b2b", whiteSpace: "nowrap" }}>
+                            {user.name} {user.lastname}
+                        </h5>
+                        <span className="badge bg-light text-secondary border rounded-pill mt-1 px-3 py-1 fw-medium">
+                            {user.account_type === 'Empresa' ? 'Organizador' : 'Usuario'}
                         </span>
                     </div>
 
@@ -103,10 +115,16 @@ export const Profile = () => {
                     <nav className="d-flex flex-column gap-2 flex-grow-1">
                         <MenuItem icon={<User size={20} />} text="Dashboard" isActive={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
                         <MenuItem icon={<Ticket size={20} />} text="Mis Entradas" isActive={activeTab === "tickets"} onClick={() => setActiveTab("tickets")} />
-                        <MenuItem icon={<Heart size={20} />} text="Favoritos" isActive={activeTab === "favoritos"} onClick={() => setActiveTab("favoritos")} />
-                        <MenuItem icon={<PlusCircle size={20} />} text="Crear Evento" isActive={activeTab === "crear-evento"} onClick={() => setActiveTab("crear-evento")} />
-                        <hr className="my-3 opacity-25" />
-                        <MenuItem icon={<Settings size={20} />} text="Configuración" isActive={activeTab === "configuracion"} onClick={() => setActiveTab("configuracion")} />
+                        
+                        {/* 👇 AQUÍ AGREGAMOS EL BOTÓN DE MIS EVENTOS 👇 */}
+                        <MenuItem icon={<CalendarDays size={20} />} text="Mis Eventos" isActive={activeTab === "events"} onClick={() => setActiveTab("events")} />
+                        
+                        <MenuItem icon={<Heart size={20} />} text="Favoritos" onClick={() => navigate("/favorites")} />
+                        <MenuItem icon={<PlusCircle size={20} />} text="Crear Evento" onClick={() => navigate("/create-event")} />
+                        
+                        <hr className="text-light my-3"/>
+                        
+                        <MenuItem icon={<Settings size={20} />} text="Configuración" isActive={activeTab === "settings"} onClick={() => setActiveTab("settings")} />
                     </nav>
 
                     {/* Botón Salir */}
@@ -124,13 +142,13 @@ export const Profile = () => {
     );
 };
 
-// Componente Auxiliar para los Items del Menú
+// Componente visual para los botones del menú 
 const MenuItem = ({ icon, text, isActive, onClick }) => {
     const orangeGradient = "linear-gradient(135deg, #c23b00 0%, #ff7a00 100%)";
     return (
         <button
             onClick={onClick}
-            className={`btn text-start d-flex align-items-center gap-3 w-100 rounded-4 p-3 border-0 transition-all ${isActive ? "text-white fw-bold shadow-sm" : "bg-transparent text-secondary fw-medium"}`}
+            className={`btn text-start d-flex flex-row align-items-center gap-3 w-100 rounded-4 p-3 border-0 transition-all ${isActive ? "text-white fw-bold shadow-sm" : "bg-transparent text-secondary fw-medium"}`}
             style={isActive ? { background: orangeGradient } : {}}
         >
             {icon} <span>{text}</span>

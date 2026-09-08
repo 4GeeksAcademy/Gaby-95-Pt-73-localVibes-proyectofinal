@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Calendar as CalendarIcon, Calendar, MapPin, AlignLeft, DollarSign, Users, Search, Clock, Mic, X, Plus, Lock, Info, Phone, ImagePlus } from "lucide-react";
-import { LocationPicker } from "../components/LocationPicker";
-import { ImageUpload } from "../components/ImageUpload";
+import { Calendar, MapPin, AlignLeft, DollarSign, Users, Search, Clock, X, Lock } from "lucide-react";
+
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -120,9 +119,6 @@ export const CreateEvent = () => {
     });
 
     const [isFreeEvent, setIsFreeEvent] = useState(false);
-    const [hasGuests, setHasGuests] = useState(false);
-    const [guestList, setGuestList] = useState([]);
-    const [currentGuest, setCurrentGuest] = useState("");
     
     const [searchResults, setSearchResults] = useState([]);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -157,15 +153,6 @@ export const CreateEvent = () => {
 
     // ======================== FUNCIONES ========================
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-    const handleGuests = (e, action, guest = null) => {
-        e.preventDefault();
-        if (action === "ADD" && currentGuest.trim() && !guestList.includes(currentGuest.trim())) {
-            setGuestList([...guestList, currentGuest.trim()]);
-            setCurrentGuest("");
-        }
-        if (action === "REMOVE") setGuestList(guestList.filter(g => g !== guest));
-    };
 
     const handleAddressSearch = (e) => {
         const query = e.target.value;
@@ -224,13 +211,19 @@ export const CreateEvent = () => {
         try {
             let uploadedImagesUrls = [];
             
+            // LÓGICA DE SUBIDA INTELIGENTE 
             if (eventImage) {
                 if (typeof eventImage === "string") {
                     uploadedImagesUrls.push(eventImage);
                 } else if (Array.isArray(eventImage) && eventImage.length > 0) {
                     uploadedImagesUrls = eventImage;
                 } else {
-                    uploadedImagesUrls.push(formData.image_url);
+                    const cloudData = new FormData();
+                    cloudData.append("file", eventImage); 
+                    cloudData.append("upload_preset", "TU_UPLOAD_PRESET");
+                    const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/shhfhqyk/image/upload`, { method: "POST", body: cloudData });
+                    if (!cloudRes.ok) throw new Error("Error subiendo la imagen a Cloudinary");
+                    uploadedImagesUrls.push((await cloudRes.json()).secure_url);
                 }
             } else if (formData.image_url) {
                 uploadedImagesUrls.push(formData.image_url);
@@ -249,8 +242,7 @@ export const CreateEvent = () => {
                 capacity: parseInt(formData.capacity) || null,
                 latitude: formData.latitude ? parseFloat(formData.latitude) : null,
                 longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-                imgs_event: uploadedImagesUrls,
-                guests: hasGuests ? guestList : []
+                imgs_event: uploadedImagesUrls
             };
 
             const response = await fetch(`${backendUrl}/api/events`, {
@@ -292,7 +284,17 @@ export const CreateEvent = () => {
                     <p className="text-muted">Completa los detalles para que la comunidad descubra tu evento.</p>
                 </div>
 
-                {error && <div className="alert alert-danger rounded-4 shadow-sm border-0"><Info size={18} className="me-2" />{error}</div>}
+                {error && <div className="alert alert-danger rounded-4 shadow-sm border-0">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="bg-white p-4 p-md-5 rounded-4 shadow-sm border-0">
+                    
+                    {/* COMPONENTE DE IMAGEN DE TU COMPAÑERO */}
+                    <div className="mb-4">
+                        <label className="form-label fw-bold">Imagen del evento (Flyer)</label>
+                        <ImageUpload 
+                            onImagesUploaded={(urls) => setEventImage(urls[0])} 
+                        />
+                    </div>
 
                 <form onSubmit={handleSubmit} className={`row g-4 needs-validation ${validated ? 'was-validated' : ''}`} noValidate>
 
@@ -348,58 +350,21 @@ export const CreateEvent = () => {
                         </div>
                     </div>
 
-                    <div className="col-12">
-                        <div className="card border-0 shadow-sm rounded-4 p-4">
-                            <h5 className="fw-bold d-flex align-items-center mb-4">
-                                <MapPin size={20} className="me-2 text-danger" /> Ubicación
-                            </h5>
-                            <div className="row g-3">
-                                <div className="col-12 col-md-6">
-                                    <label className="form-label fw-medium">Nombre del Lugar <span className="text-danger">*</span></label>
-                                    <input type="text" className="form-control bg-light border-0 py-2" name="location_name" value={formData.location_name} onChange={handleChange} required placeholder="Ej: Teatro Municipal" />
-                                </div>
-                                <div className="col-12 col-md-6 position-relative">
-                                    <label className="form-label fw-medium">Buscar Dirección</label>
-                                    <input type="text" className="form-control bg-light border-0 py-2" value={formData.address} onChange={handleAddressSearch} autoComplete="off" placeholder="Escribe para buscar..." />
-                                    {showDropdown && searchResults.length > 0 && (
-                                        <div className="position-absolute w-100 bg-white border rounded-3 shadow-lg" style={{ zIndex: 1000, top: "100%", maxHeight: "200px", overflowY: "auto" }}>
-                                            {searchResults.map((loc, idx) => (
-                                                <div key={idx} className="p-3 border-bottom text-truncate cursor-pointer hover-bg-light" onClick={() => {
-                                                    setFormData({...formData, address: loc.display_name, latitude: parseFloat(loc.lat), longitude: parseFloat(loc.lon)});
-                                                    setShowDropdown(false);
-                                                }}>
-                                                    <MapPin size={14} className="text-danger me-2 d-inline" />{loc.display_name}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="col-12 mt-3">
-                                    <div className="rounded-4 overflow-hidden border shadow-sm" style={{ height: "250px", zIndex: 1 }}>
-                                        <MapContainer center={formData.latitude ? [formData.latitude, formData.longitude] : [10.4806, -66.9036]} zoom={12} style={{ height: "100%", cursor: "crosshair" }}>
-                                            <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                                            <MapEventsListener setFormData={setFormData} />
-                                            {formData.latitude && <Marker position={[formData.latitude, formData.longitude]} icon={customMarker} />}
-                                            <MapAutoUpdater lat={formData.latitude} lng={formData.longitude} />
-                                        </MapContainer>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="col-12 col-md-6">
+                            <label className="form-label fw-bold"><MapPin size={18} className="me-2 text-danger"/> Lugar *</label>
+                            <input type="text" className="form-control rounded-3 py-2" name="location_name" value={formData.location_name} onChange={handleChange} required />
                         </div>
-                    </div>
-
-                    <div className="col-12">
-                        <div className="card border-0 shadow-sm rounded-4 p-4">
-                            <h5 className="fw-bold d-flex align-items-center mb-4">
-                                <DollarSign size={20} className="me-2 text-danger" /> Detalles y Costos
-                            </h5>
-                            <div className="row g-3">
-                                <div className="col-12 col-md-6">
-                                    <div className="d-flex justify-content-between align-items-center mb-2">
-                                        <label className="form-label fw-medium mb-0">Precio ($)</label>
-                                        <div className="form-check form-switch m-0">
-                                            <input className="form-check-input cursor-pointer" type="checkbox" checked={isFreeEvent} onChange={() => { setIsFreeEvent(!isFreeEvent); if(!isFreeEvent) setFormData({...formData, price: ""}); }}/>
-                                            <label className="form-check-label small text-muted">Gratis</label>
+                        <div className="col-12 col-md-6 position-relative">
+                            <label className="form-label fw-bold"><Search size={18} className="me-2 text-danger"/> Buscar Dirección</label>
+                            <input type="text" className="form-control rounded-3 py-2" value={formData.address} onChange={handleAddressSearch} autoComplete="off"/>
+                            {showDropdown && searchResults.length > 0 && (
+                                <div className="position-absolute w-100 bg-white border rounded-3 shadow-lg" style={{ zIndex: 1000, top: "100%", maxHeight: "200px", overflowY: "auto" }}>
+                                    {searchResults.map((loc, idx) => (
+                                        <div key={idx} className="p-3 border-bottom text-truncate cursor-pointer hover-bg-light" onClick={() => {
+                                            setFormData({...formData, address: loc.display_name, latitude: parseFloat(loc.lat), longitude: parseFloat(loc.lon)});
+                                            setShowDropdown(false);
+                                        }}>
+                                            <MapPin size={14} className="text-danger me-2 d-inline" />{loc.display_name}
                                         </div>
                                     </div>
                                     <input type="number" step="0.01" min="0" className={`form-control bg-light border-0 py-2 ${isFreeEvent ? 'text-muted' : ''}`} name="price" value={isFreeEvent ? "0" : formData.price} onChange={handleChange} disabled={isFreeEvent} placeholder="0.00" />
