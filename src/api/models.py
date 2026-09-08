@@ -26,6 +26,8 @@ class User(db.Model):
     role: Mapped[Optional[str]] = mapped_column(String(50), default="user")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     email_verify: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    verification_code: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)
+    verification_code_expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     # Relaciones
