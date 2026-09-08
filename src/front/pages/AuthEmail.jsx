@@ -1,42 +1,37 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import loginImg from "../../images/login.jpg"; 
+import loginImg from "../../images/login.jpg"; // Puedes cambiar esta imagen por una de correo luego si lo deseas
 import fondo from "../../images/fondo_completo.jpg";
 
-
-export const Login = () => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+export const AuthEmail = () => {
+    const [code, setCode] = useState("");
     const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
     const navigate = useNavigate();
-
-    // 👇 EL GUARDIA DE SEGURIDAD 👇
-    // Si el usuario ya está logueado (tiene token), lo enviamos al home
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) {
-            navigate("/"); // Cambia a "/profile" si prefieres que vayan directo a su perfil
-        }
-    }, [navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setSuccess("");
 
         try {
-            const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/login", {
+            // Asegúrate de cambiar esta ruta por la de tu backend real
+            const response = await fetch(import.meta.env.VITE_BACKEND_URL + "/api/verify-email", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ code })
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                localStorage.setItem("token", data.token);
-                navigate("/profile");
+                setSuccess("¡Correo verificado con éxito! Redirigiendo...");
+                // Espera 2 segundos antes de enviar al usuario al login
+                setTimeout(() => {
+                    navigate("/login"); 
+                }, 2000);
             } else {
-                setError(data.message || "Credenciales inválidas");
+                setError(data.message || "Código inválido o expirado");
             }
         } catch (err) {
             setError("Error de conexión con el servidor");
@@ -76,53 +71,36 @@ export const Login = () => {
                 }}
             ></div>
 
-            {/* CAPA 3: Tarjeta de Iniciar Sesión */}
+            {/* CAPA 3: Tarjeta de Verificación */}
             <div className="card shadow-lg border-0 rounded-4 overflow-hidden" style={{ maxWidth: "900px", width: "100%", zIndex: 1 }}>
                 <div className="row g-0 align-items-stretch">
 
                     {/* COLUMNA IZQUIERDA: Formulario */}
                     <div className="col-md-6 p-4 p-sm-5 bg-white d-flex flex-column justify-content-center">
                         <div className="mb-4">
-                            <h3 className="fw-bold mb-2 text-dark">Iniciar sesión</h3>
-                            <p className="text-muted small">Descubre y conecta con los mejores eventos de la ciudad.</p>
+                            <h3 className="fw-bold mb-2 text-dark">Verifica tu correo</h3>
+                            <p className="text-muted small">
+                                Hemos enviado un código de seguridad a tu bandeja de entrada. Ingrésalo a continuación para continuar.
+                            </p>
                         </div>
 
+                        {/* Alertas de Error o Éxito */}
                         {error && <div className="alert alert-danger py-2 small mb-3">{error}</div>}
+                        {success && <div className="alert alert-success py-2 small mb-3">{success}</div>}
 
                         <form onSubmit={handleSubmit}>
-                            {/* Input Correo */}
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold small text-dark">Correo electrónico</label>
+                            {/* Input Código */}
+                            <div className="mb-4">
+                                <label className="form-label fw-semibold small text-dark">Código de verificación</label>
                                 <input
-                                    type="email"
-                                    className="form-control form-control-lg bg-light border-0 fs-6 shadow-sm"
-                                    placeholder="ejemplo@correo.com"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    type="text"
+                                    className="form-control form-control-lg bg-light border-0 fs-6 shadow-sm text-center fw-bold"
+                                    placeholder="Ej: 123456"
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    maxLength="6" // Opcional: Limita la cantidad de caracteres
                                     required
                                 />
-                            </div>
-
-                            {/* Input Contraseña */}
-                            <div className="mb-3">
-                                <label className="form-label fw-semibold small text-dark">Contraseña</label>
-                                <input
-                                    type="password"
-                                    className="form-control form-control-lg bg-light border-0 fs-6 shadow-sm"
-                                    placeholder="••••••••"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                />
-                            </div>
-
-                            {/* Opciones de cuenta */}
-                            <div className="d-flex justify-content-between align-items-center mb-4 small">
-                                <div className="form-check">
-                                    <input type="checkbox" className="form-check-input shadow-none" id="rememberMe" />
-                                    <label className="form-check-label text-muted" htmlFor="rememberMe">Recuérdame</label>
-                                </div>
-                                <a href="#" className="text-decoration-none fw-bold" style={{ color: "#ef4444" }}>¿Olvidaste tu contraseña?</a>
                             </div>
 
                             {/* Botón Principal */}
@@ -130,14 +108,20 @@ export const Login = () => {
                                 type="submit"
                                 className="btn btn-lg w-100 text-white rounded-3 mb-4 fs-6 fw-bold shadow-sm"
                                 style={{ backgroundColor: "#ef4444", border: "none" }}
+                                disabled={!!success} // Deshabilita el botón si ya tuvo éxito
                             >
-                                Iniciar sesión
+                                Verificar cuenta
                             </button>
 
-                            {/* Enlace de Registro */}
-                            <div className="text-center">
+                            {/* Enlaces de pie de formulario */}
+                            <div className="text-center mt-3">
+                                <p className="text-muted small mb-2">
+                                    ¿No recibiste el código? <button type="button" className="btn btn-link p-0 fw-bold text-decoration-none shadow-none" style={{ color: "#ef4444" }}>Reenviar correo</button>
+                                </p>
                                 <p className="text-muted small mb-0">
-                                    ¿No tienes cuenta? <Link to="/signup" style={{ color: "#ef4444", fontWeight: "700", textDecoration: "none" }}>Regístrate</Link>
+                                    <Link to="/login" className="text-decoration-none fw-bold text-secondary">
+                                        ← Volver al inicio de sesión
+                                    </Link>
                                 </p>
                             </div>
                         </form>

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { User, Ticket, Settings, LogOut, PlusCircle, Heart, ShieldCheck } from "lucide-react";
+import { User, Ticket, Settings, LogOut, PlusCircle, Heart, ShieldCheck, CalendarDays } from "lucide-react"; // Añadido CalendarDays
 
 // Importación de los sub-componentes 
 import { TabDashboard } from "../components/profile/TabDashboard";
 import { TabTickets } from "../components/profile/TabTickets";
 import { TabSettings } from "../components/profile/TabSettings";
+import { TabEvents } from "../components/profile/TabEvents"; // Importación de la nueva Tab
 
 export const Profile = () => {
     const [user, setUser] = useState(null);
@@ -61,6 +62,7 @@ export const Profile = () => {
         switch (activeTab) {
             case "dashboard": return <TabDashboard user={user} />;
             case "tickets": return <TabTickets />;
+            case "events": return <TabEvents />; // Añadido el caso para TabEvents
             case "settings": return <TabSettings user={user} />;
             default: return <TabDashboard user={user} />;
         }
@@ -70,14 +72,13 @@ export const Profile = () => {
         <div className="container-fluid bg-light min-vh-100 p-0 d-flex flex-column flex-md-row">
             
             {/* =======================================
-                SIDEBAR (Ancho mínimo garantizado y Flex-Row en botones)
+                SIDEBAR
             ======================================= */}
             <aside 
                 className="bg-white border-end shadow-sm" 
                 style={{ 
                     width: "100%", 
                     maxWidth: "100%", 
-                    // En pantallas medianas en adelante, la barra tendrá entre 280px y 300px
                     flexBasis: "280px", 
                     flexShrink: 0 
                 }}
@@ -100,7 +101,6 @@ export const Profile = () => {
                                 </span>
                             )}
                         </div>
-                        {/* whiteSpace: "nowrap" obliga al nombre a quedarse en una sola línea */}
                         <h5 className="fw-bold mb-1 text-truncate" style={{ color: "#2b2b2b", whiteSpace: "nowrap" }}>
                             {user.name} {user.lastname}
                         </h5>
@@ -117,6 +117,9 @@ export const Profile = () => {
                     <nav className="d-flex flex-column gap-2 mb-5 w-100">
                         <MenuItem icon={<User size={20} />} text="Mi Dashboard" isActive={activeTab === "dashboard"} onClick={() => setActiveTab("dashboard")} />
                         <MenuItem icon={<Ticket size={20} />} text="Mis Entradas" isActive={activeTab === "tickets"} onClick={() => setActiveTab("tickets")} />
+                        
+                        {/* 👇 AQUÍ AGREGAMOS EL BOTÓN DE MIS EVENTOS 👇 */}
+                        <MenuItem icon={<CalendarDays size={20} />} text="Mis Eventos" isActive={activeTab === "events"} onClick={() => setActiveTab("events")} />
                         
                         <MenuItem icon={<Heart size={20} />} text="Favoritos" onClick={() => navigate("/favorites")} />
                         <MenuItem icon={<PlusCircle size={20} />} text="Crear Evento" onClick={() => navigate("/create-event")} />
@@ -152,13 +155,12 @@ export const Profile = () => {
     );
 };
 
-// Componente visual para los botones del menú (Arreglado para asegurar Flex-Row)
+// Componente visual para los botones del menú 
 const MenuItem = ({ icon, text, isActive, onClick }) => {
     const orangeGradient = "linear-gradient(135deg, #c23b00 0%, #ff7a00 100%)";
     return (
         <button
             onClick={onClick}
-            // flex-row fuerza a que el ícono y el texto estén siempre al lado del otro
             className={`btn text-start d-flex flex-row align-items-center gap-3 w-100 rounded-4 p-3 border-0 transition-all ${isActive ? "text-white fw-bold shadow-sm" : "bg-transparent text-secondary fw-medium"}`}
             style={isActive ? { background: orangeGradient } : {}}
             onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.backgroundColor = '#f8f9fa' }}

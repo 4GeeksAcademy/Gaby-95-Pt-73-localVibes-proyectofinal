@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager  # Importamos JWTManager
+from datetime import timedelta
 
 from api.utils import APIException, generate_sitemap
 from api.models import db
@@ -39,7 +40,7 @@ CORS(app)
 # Clave secreta para firmar los tokens JWT y ubicación del token en la petición
 app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "super-secret-key")
 app.config["JWT_TOKEN_LOCATION"] = ["headers"]
-app.config["JWT_ACCESS_TOKEN_EXPIRES"] = False
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
 
 # Inicialización de la extensión JWTManager
 jwt = JWTManager(app)

@@ -1,16 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { Calendar, MapPin, AlignLeft, DollarSign, Users, Search, Clock, X, Lock } from "lucide-react";
-
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-
-// 👇 Importación del componente de tu compañero
-import { ImageUpload } from "../components/ImageUpload"; 
+import { ImageUpload } from "../components/ImageUpload";
 
 // =========================================================
-// MINI COMPONENTES
+// MINI COMPONENTES (Mismos que CreateEvent)
 // =========================================================
 const customMarker = new L.divIcon({
     className: "custom-marker",
@@ -24,7 +21,6 @@ const MapAutoUpdater = ({ lat, lng }) => {
     return null;
 };
 
-// Selector de Tiempo Premium (Estilo Píldora Minimalista SIN flechas)
 const TimeSelect = ({ label, time, setTime, prefix }) => {
     const hours = ['12','01','02','03','04','05','06','07','08','09','10','11'];
     const minutes = ['00','15','30','45'];
@@ -35,35 +31,15 @@ const TimeSelect = ({ label, time, setTime, prefix }) => {
                 <Clock size={14} className="me-1"/> {label}
             </label>
             <div className="d-flex align-items-center justify-content-start gap-2 bg-white p-2 rounded-pill border shadow-sm" style={{ width: "fit-content" }}>
-                
-                <select 
-                    className="form-control custom-time-select bg-light text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" 
-                    value={time[`${prefix}H`]} 
-                    onChange={e => setTime({...time, [`${prefix}H`]: e.target.value})}
-                    style={{ width: "45px", fontSize: "0.9rem", cursor: "pointer" }}
-                >
+                <select className="form-control custom-time-select bg-light text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" value={time[`${prefix}H`]} onChange={e => setTime({...time, [`${prefix}H`]: e.target.value})} style={{ width: "45px", fontSize: "0.9rem", cursor: "pointer" }}>
                     {hours.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
-                
                 <span className="fw-bold text-muted" style={{ fontSize: "1.1rem", paddingBottom: "2px" }}>:</span>
-                
-                <select 
-                    className="form-control custom-time-select bg-light text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" 
-                    value={time[`${prefix}M`]} 
-                    onChange={e => setTime({...time, [`${prefix}M`]: e.target.value})}
-                    style={{ width: "45px", fontSize: "0.9rem", cursor: "pointer" }}
-                >
+                <select className="form-control custom-time-select bg-light text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" value={time[`${prefix}M`]} onChange={e => setTime({...time, [`${prefix}M`]: e.target.value})} style={{ width: "45px", fontSize: "0.9rem", cursor: "pointer" }}>
                     {minutes.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                
-                <select 
-                    className="form-control custom-time-select text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" 
-                    value={time[`${prefix}A`]} 
-                    onChange={e => setTime({...time, [`${prefix}A`]: e.target.value})}
-                    style={{ width: "55px", fontSize: "0.85rem", background: "#ff523b", color: "white", cursor: "pointer" }}
-                >
-                    <option value="AM">AM</option>
-                    <option value="PM">PM</option>
+                <select className="form-control custom-time-select text-center fw-bold border-0 rounded-pill px-0 py-1 shadow-none" value={time[`${prefix}A`]} onChange={e => setTime({...time, [`${prefix}A`]: e.target.value})} style={{ width: "55px", fontSize: "0.85rem", background: "#ff523b", color: "white", cursor: "pointer" }}>
+                    <option value="AM">AM</option><option value="PM">PM</option>
                 </select>
             </div>
         </div>
@@ -76,28 +52,26 @@ const MapEventsListener = ({ setFormData }) => {
 };
 
 // =========================================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL (EditEvent)
 // =========================================================
-export const CreateEvent = () => {
+export const EditEvent = () => {
+    const { id } = useParams(); // Obtenemos el ID de la URL
     const navigate = useNavigate();
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
     const orangeGradient = "linear-gradient(135deg, #c23b00 0%, #ff7a00 100%)";
     const today = new Date().toISOString().split("T")[0]; 
 
-    // Estados Generales
     const [isLoggedIn, setIsLoggedIn] = useState(true);
     const [categories, setCategories] = useState([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoadingData, setIsLoadingData] = useState(true); // Nuevo estado para carga inicial
     const [error, setError] = useState("");
     
-    // Estados de Validación
     const [timeError, setTimeError] = useState("");
     const [dateError, setDateError] = useState("");
 
-    // Estado único para la imagen del evento
     const [eventImage, setEventImage] = useState(null); 
 
-    // Formulario Principal
     const [formData, setFormData] = useState({
         title: "", category_id: "", location_name: "", address: "", event_date: "",
         description: "", price: "", capacity: "", latitude: "", longitude: ""    
@@ -117,13 +91,88 @@ export const CreateEvent = () => {
 
     // ======================== EFECTOS ========================
     useEffect(() => {
-        if (!localStorage.getItem("token")) setIsLoggedIn(false);
-        fetch(`${backendUrl}/api/categories`).then(res => res.json()).then(setCategories).catch(console.error);
-    }, [backendUrl]);
+        const token = localStorage.getItem("token");
+        if (!token) {
+            setIsLoggedIn(false);
+            return;
+        }
+
+        // Cargar categorías y datos del evento al mismo tiempo
+        Promise.all([
+            fetch(`${backendUrl}/api/categories`).then(res => res.json()),
+            fetch(`${backendUrl}/api/events/${id}`).then(res => res.json())
+        ])
+        .then(([catsData, eventData]) => {
+            setCategories(catsData);
+            
+            // 1. Extraer la fecha del start_time ("YYYY-MM-DD")
+            const datePart = eventData.start_time ? eventData.start_time.split("T")[0] : "";
+            
+            // 2. Extraer la hora de inicio y fin (requiere un poco de parseo matemático)
+            let newTime = { ...time };
+            
+            if (eventData.start_time && eventData.start_time.includes("T")) {
+                const startTimePart = eventData.start_time.split("T")[1];
+                const [sH, sM] = startTimePart.split(":");
+                let hr = parseInt(sH);
+                newTime.startA = hr >= 12 ? "PM" : "AM";
+                if (hr > 12) hr -= 12;
+                if (hr === 0) hr = 12;
+                newTime.startH = hr.toString().padStart(2, '0');
+                newTime.startM = sM;
+            }
+
+            if (eventData.end_time) {
+                const [eH, eM] = eventData.end_time.split(":");
+                let hr = parseInt(eH);
+                newTime.endA = hr >= 12 ? "PM" : "AM";
+                if (hr > 12) hr -= 12;
+                if (hr === 0) hr = 12;
+                newTime.endH = hr.toString().padStart(2, '0');
+                newTime.endM = eM;
+            }
+
+            // 3. Limpiar la descripción (quitar el texto extra de la hora si lo guardamos antes)
+            let cleanDescription = eventData.description || "";
+            if (cleanDescription.includes("Hora de finalización estimada:")) {
+                const splitDesc = cleanDescription.split("\n\n");
+                cleanDescription = splitDesc.length > 1 ? splitDesc.slice(1).join("\n\n") : "";
+            }
+
+            // 4. Llenar el formulario con los datos reales
+            setFormData({
+                title: eventData.title || "",
+                category_id: eventData.category_id || "",
+                location_name: eventData.location_name || "",
+                address: eventData.address || "",
+                event_date: datePart,
+                description: cleanDescription,
+                price: eventData.price || "",
+                capacity: eventData.capacity || "",
+                latitude: eventData.latitude || "",
+                longitude: eventData.longitude || ""
+            });
+
+            setTime(newTime);
+            setIsFreeEvent(eventData.price === 0 || eventData.price === 0.0);
+            
+            if (eventData.imgs_event && eventData.imgs_event.length > 0) {
+                setEventImage(eventData.imgs_event[0]);
+            }
+
+            setIsLoadingData(false);
+        })
+        .catch(err => {
+            console.error(err);
+            setError("Error al cargar los datos del evento");
+            setIsLoadingData(false);
+        });
+    }, [backendUrl, id]);
 
     useEffect(() => {
         if (formData.event_date && formData.event_date < today) {
-            setDateError("La fecha del evento no puede ser anterior al día de hoy.");
+            // Nota: En edición permitimos fechas pasadas si el evento ya pasó y solo quieren corregir algo de texto.
+            setDateError(""); 
         } else {
             setDateError("");
         }
@@ -138,7 +187,6 @@ export const CreateEvent = () => {
         };
         const startTotal = getMins(time.startH, time.startM, time.startA);
         const endTotal = getMins(time.endH, time.endM, time.endA);
-        
         setTimeError(startTotal >= endTotal ? "La hora de fin debe ser posterior a la de inicio." : "");
     }, [time]);
 
@@ -171,7 +219,6 @@ export const CreateEvent = () => {
         e.preventDefault();
         setError("");
         
-        if (dateError) return setError("Por favor, corrige la fecha del evento.");
         if (timeError) return setError("Corrige las horas del evento.");
         if (!formData.event_date) return setError("Debes seleccionar la fecha del evento.");
         
@@ -189,7 +236,7 @@ export const CreateEvent = () => {
                     const cloudData = new FormData();
                     cloudData.append("file", eventImage); 
                     cloudData.append("upload_preset", "TU_UPLOAD_PRESET");
-                    const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/shhfhqyk/image/upload`, { method: "POST", body: cloudData });
+                    const cloudRes = await fetch(`https://api.cloudinary.com/v1_1/TU_CLOUD_NAME/image/upload`, { method: "POST", body: cloudData });
                     if (!cloudRes.ok) throw new Error("Error subiendo la imagen a Cloudinary");
                     uploadedImagesUrls.push((await cloudRes.json()).secure_url);
                 }
@@ -211,18 +258,23 @@ export const CreateEvent = () => {
                 imgs_event: uploadedImagesUrls
             };
 
-            const response = await fetch(`${backendUrl}/api/events`, {
-                method: "POST",
+            // 👇 AQUI HACEMOS EL PUT A LA RUTA CON EL ID 👇
+            const response = await fetch(`${backendUrl}/api/events/${id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
                 body: JSON.stringify(finalEventData)
             });
 
-            if (response.ok) navigate("/events"); 
-            else throw new Error((await response.json()).message || "Error al crear el evento");
+            if (response.ok) navigate("/profile"); // Volvemos al perfil
+            else throw new Error((await response.json()).message || "Error al actualizar el evento");
 
         } catch (err) { setError(err.message); } 
         finally { setIsSubmitting(false); }
     };
+
+    if (isLoadingData && isLoggedIn) {
+        return <div className="d-flex justify-content-center align-items-center vh-100"><span className="spinner-border text-danger"></span></div>;
+    }
 
     return (
         <div className="container-fluid bg-light py-5 position-relative" style={{ minHeight: "100vh" }}>
@@ -232,9 +284,8 @@ export const CreateEvent = () => {
                     <div className="card shadow-lg border-0 rounded-4 p-5 text-center animate__animated animate__zoomIn" style={{ maxWidth: "450px" }}>
                         <Lock size={48} className="text-danger mx-auto mb-4" />
                         <h3 className="fw-bold mb-3">Acceso Restringido</h3>
-                        <p className="text-muted mb-4">Inicia sesión para publicar y gestionar eventos.</p>
-                        <div className="d-flex gap-3 justify-content-center">
-                            <Link to="/events" className="btn btn-light rounded-pill px-4 py-2 border">Volver</Link>
+                        <div className="d-flex gap-3 justify-content-center mt-4">
+                            <Link to="/profile" className="btn btn-light rounded-pill px-4 py-2 border">Volver</Link>
                             <Link to="/login" className="btn text-white rounded-pill px-4 py-2 shadow-sm" style={{ background: orangeGradient }}>Iniciar Sesión</Link>
                         </div>
                     </div>
@@ -242,18 +293,20 @@ export const CreateEvent = () => {
             )}
 
             <div className="container" style={{ maxWidth: "800px" }}>
-                <div className="text-center mb-5">
-                    <h2 className="fw-bold" style={{ color: "#2b2b2b" }}>Publica tu Evento</h2>
+                <div className="d-flex align-items-center justify-content-between mb-5">
+                    <Link to="/profile" className="btn btn-light rounded-pill border px-3 fw-medium">Volver</Link>
+                    <h2 className="fw-bold m-0" style={{ color: "#2b2b2b" }}>Editar Evento</h2>
+                    <div style={{ width: "80px" }}></div>
                 </div>
 
                 {error && <div className="alert alert-danger rounded-4 shadow-sm border-0">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="bg-white p-4 p-md-5 rounded-4 shadow-sm border-0">
                     
-                    {/* COMPONENTE DE IMAGEN DE TU COMPAÑERO */}
                     <div className="mb-4">
                         <label className="form-label fw-bold">Imagen del evento (Flyer)</label>
                         <ImageUpload 
+                            currentImage={typeof eventImage === 'string' ? eventImage : null}
                             onImagesUploaded={(urls) => setEventImage(urls[0])} 
                         />
                     </div>
@@ -273,27 +326,14 @@ export const CreateEvent = () => {
 
                         <div className="col-12">
                             <div className="p-4 bg-light rounded-4 border">
-                                <h6 className="fw-bold mb-4 border-bottom pb-2" style={{ color: "#ff523b" }}>
-                                    <Calendar size={20} className="me-2"/> Fecha y Horario
-                                </h6>
+                                <h6 className="fw-bold mb-4 border-bottom pb-2" style={{ color: "#ff523b" }}><Calendar size={20} className="me-2"/> Fecha y Horario</h6>
                                 <div className="row g-4">
                                     <div className="col-12 col-md-4">
                                         <label className="form-label fw-bold text-secondary mb-2" style={{ fontSize: "0.85rem" }}>Fecha del evento</label>
-                                        <input 
-                                            type="date" 
-                                            className={`form-control rounded-3 py-2 shadow-sm border-0 cursor-pointer text-muted fw-medium ${dateError ? 'is-invalid' : ''}`} 
-                                            name="event_date" 
-                                            value={formData.event_date} 
-                                            onChange={handleChange} 
-                                            min={today} 
-                                            required 
-                                        />
-                                        {dateError && <div className="text-danger small fw-bold mt-2 d-flex align-items-center"><X size={14} className="me-1"/> {dateError}</div>}
+                                        <input type="date" className={`form-control rounded-3 py-2 shadow-sm border-0 cursor-pointer text-muted fw-medium ${dateError ? 'is-invalid' : ''}`} name="event_date" value={formData.event_date} onChange={handleChange} required />
                                     </div>
-                                    
                                     <TimeSelect label="Hora de Inicio" time={time} setTime={setTime} prefix="start" />
                                     <TimeSelect label="Hora de Fin" time={time} setTime={setTime} prefix="end" />
-                                    
                                     {timeError && <div className="col-12 text-danger small fw-bold mt-2 d-flex align-items-center"><X size={16} className="me-1"/> {timeError}</div>}
                                 </div>
                             </div>
@@ -312,9 +352,7 @@ export const CreateEvent = () => {
                                         <div key={idx} className="p-3 border-bottom text-truncate cursor-pointer hover-bg-light" onClick={() => {
                                             setFormData({...formData, address: loc.display_name, latitude: parseFloat(loc.lat), longitude: parseFloat(loc.lon)});
                                             setShowDropdown(false);
-                                        }}>
-                                            <MapPin size={14} className="text-danger me-2 d-inline" />{loc.display_name}
-                                        </div>
+                                        }}><MapPin size={14} className="text-danger me-2 d-inline" />{loc.display_name}</div>
                                     ))}
                                 </div>
                             )}
@@ -351,31 +389,17 @@ export const CreateEvent = () => {
                     </div>
 
                     <hr className="my-5 text-light" />
-                    <button 
-                        type="submit" 
-                        disabled={isSubmitting || timeError || dateError} 
-                        className="btn w-100 rounded-pill py-3 fw-bold text-white fs-5 shadow-sm transition-all hover-scale" 
-                        style={{ background: (timeError || dateError) ? "#ccc" : orangeGradient, border: "none" }}
-                    >
-                        {isSubmitting ? "Publicando evento..." : "Crear Evento"}
+                    <button type="submit" disabled={isSubmitting || timeError || dateError} className="btn w-100 rounded-pill py-3 fw-bold text-white fs-5 shadow-sm transition-all hover-scale" style={{ background: (timeError || dateError) ? "#ccc" : orangeGradient, border: "none" }}>
+                        {isSubmitting ? "Guardando Cambios..." : "Actualizar Evento"}
                     </button>
                 </form>
             </div>
             
             <style>{`
-                .custom-time-select {
-                    appearance: none !important; 
-                    -webkit-appearance: none !important;
-                    -moz-appearance: none !important;
-                    background-image: none !important;
-                    padding-right: 0 !important; 
-                }
+                .custom-time-select { appearance: none !important; -webkit-appearance: none !important; -moz-appearance: none !important; background-image: none !important; padding-right: 0 !important; }
                 .custom-time-select::-ms-expand { display: none !important; }
                 .custom-time-select:hover { background-color: #e2e8f0 !important; }
-                .custom-time-select[style*="color: white"]:hover {
-                    filter: brightness(0.9);
-                    background-color: #ff523b !important;
-                }
+                .custom-time-select[style*="color: white"]:hover { filter: brightness(0.9); background-color: #ff523b !important; }
                 .cursor-pointer { cursor: pointer; }
                 .hover-scale { transition: transform 0.2s; }
                 .hover-scale:hover { transform: scale(1.02); }
